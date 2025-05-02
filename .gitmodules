@@ -1,0 +1,6 @@
+[submodule "c-testing-and-mocking"]
+	path = c-testing-and-mocking
+	url = https://github.com/szykes/c-testing-and-mocking.git
+[submodule "avr-libc"]
+	path = avr-libc
+	url = https://github.com/avrdudes/avr-libc.git
