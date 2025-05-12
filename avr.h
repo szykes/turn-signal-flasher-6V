@@ -7,6 +7,9 @@ typedef enum {
 
 void hw_init(void);
 
+void mcu_cli(void);
+void mcu_sei(void);
+
 void gpio_relay_high(void);
 void gpio_relay_low(void);
 
