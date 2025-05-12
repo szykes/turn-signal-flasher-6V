@@ -1,4 +1,4 @@
-# avr8-project-template
+# Turn signal flasher on 6 V for MZ TS 125
 
 This is a template project for old AT90*, ATmega*, and ATtiny* projects. It uses a simple testing and mocking framework and relies on own `avr-libc` version.
 
@@ -17,5 +17,5 @@ cmake -DTEST=True -S . -B cmake-test
 ```
 
 ```
-cmake --build cmake-test --target logic-test
+cmake --build cmake-test --target app-test
 ```

@@ -37,20 +37,20 @@ if (TEST)
     c-testing-and-mocking
   )
 
-  add_executable(logic-test
+  add_executable(app-test
     test/avr_mock.c
 
-    test/logic_tc.c
+    test/app_tc.c
 
-    logic.c
+    app.c
   )
 
-  target_link_libraries(logic-test PUBLIC common)
+  target_link_libraries(app-test PUBLIC common)
 
   add_custom_command(
-    TARGET logic-test
+    TARGET app-test
     POST_BUILD
-    COMMAND logic-test
+    COMMAND app-test
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     VERBATIM
   )
@@ -90,7 +90,7 @@ else()
 
   add_executable(app EXCLUDE_FROM_ALL
     avr.c
-    logic.c
+    app.c
     main.c
 
     ${AVR_LIBC_PATH}/avr/include/stdlib.h

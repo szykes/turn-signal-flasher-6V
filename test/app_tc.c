@@ -1,4 +1,4 @@
-#include "logic.h"
+#include "app.h"
 
 #include "framework.h"
 
@@ -8,7 +8,7 @@ static bool tc_logic(void) {
   MOCK_EXPECT("gpio_high", "");
   MOCK_EXPECT("gpio_low", "");
 
-  make();
+  app_main();
 
   TEST_END();
 }

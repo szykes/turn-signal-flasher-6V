@@ -1,11 +1,11 @@
 #include "avr.h"
-#include "logic.h"
+#include "app.h"
 
 int main()
 {
   hw_init();
 
   while(1) {
-    make();
+    app_main();
   }
 }
