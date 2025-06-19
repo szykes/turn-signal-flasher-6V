@@ -4,3 +4,6 @@
 [submodule "avr-libc"]
 	path = avr-libc
 	url = https://github.com/avrdudes/avr-libc.git
+[submodule "kicad-lib"]
+	path = kicad-lib
+	url = https://github.com/szykes/kicad-lib.git
