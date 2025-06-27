@@ -56,15 +56,15 @@ if (TEST)
   )
 
 else()
-  set(F_CPU 8000000UL)
+  set(F_CPU 1000000UL)
 
   # CPU, you can find the list here:
   # https://gcc.gnu.org/onlinedocs/gcc/AVR-Options.html
-  set(MCU_GCC attiny84a)
+  set(MCU_GCC attiny45)
 
   # Part for avrdude
   # https://avrdudes.github.io/avrdude/8.0/avrdude_45.html#List-of-Parts
-  set(MCU_DUDE t84a)
+  set(MCU_DUDE t45)
 
   # ISR names:
   # https://www.nongnu.org/avr-libc/user-manual/group__avr__interrupts.html
@@ -74,7 +74,7 @@ else()
 
   # AVR Fuses, must be in concordance with your hardware and F_CPU
   # https://www.engbedded.com/fusecalc/
-  set(L_FUSE 0xE2)
+  set(L_FUSE 0x62)
   set(H_FUSE 0xDF)
 
   set(CMAKE_SYSTEM_NAME Generic)

@@ -1,21 +1,23 @@
 #ifndef AVR_H_
 #define AVR_H_
 
-typedef enum {
-  VOLTAGE_LEVEL_ = 0,
-} voltage_level_e;
+#include <stdint.h>
+#include <stdbool.h>
 
 void hw_init(void);
 
 void mcu_cli(void);
 void mcu_sei(void);
 
-void gpio_relay_high(void);
-void gpio_relay_low(void);
+bool gpio_flashing_get_state(void);
+void gpio_flashing_turn_off(void);
+void gpio_flashing_turn_on(void);
 
-voltage_level_e adc_get(void);
+void timer_start(void);
+void timer_stop(void);
 
-void wdt_init(void);
+uint8_t adc_start_and_get(void);
+
 void wdt_restart(void);
 
 #endif // AVR_H_

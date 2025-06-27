@@ -6,7 +6,55 @@
 
 static volatile bool is_run = false;
 
-void app_interrupt(void) {
+static bool is_flashing = false;
+
+
+static void evaluate_low_voltage(void) {
+  if (gpio_flashing_get_state()) {
+    // shortcut
+    gpio_flashing_turn_off();
+    is_flashing = false;
+  } else {
+    // started flashing OR turned off bulbs OR shortcut
+    is_flashing = true;
+  }
+}
+
+static void evaluate_high_voltage(void) {
+  if (gpio_flashing_get_state()) {
+    // turned on bulbs
+    // do nothing
+  } else {
+    // not switched turn signaling
+    is_flashing = false;
+  }
+}
+
+static void check_voltage(void) {
+  uint8_t voltage = adc_start_and_get();
+
+  if (voltage < 10) {
+    evaluate_low_voltage();
+  } else {
+    evaluate_high_voltage();
+  }
+}
+
+static void evaluate_flashing_state(void) {
+  static bool prev_is_flashing = false;
+
+  if (!prev_is_flashing && is_flashing) {
+    timer_start();
+    gpio_flashing_turn_on();
+  } if (prev_is_flashing && !is_flashing) {
+    gpio_flashing_turn_off();
+    timer_stop();
+  }
+
+  prev_is_flashing = is_flashing;
+}
+
+void app_timer_interrupt(void) {
   is_run = true;
 }
 
@@ -21,5 +69,13 @@ void app_main(void) {
   mcu_sei();
 
   if (is_running) {
+    if (gpio_flashing_get_state()) {
+      gpio_flashing_turn_off();
+    } else {
+      gpio_flashing_turn_on();
+    }
   }
+
+  check_voltage();
+  evaluate_flashing_state();
 }
