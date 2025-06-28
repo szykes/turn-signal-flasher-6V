@@ -30,8 +30,13 @@ if (TEST)
     -ftrapv
     -fstack-protector-all
     --param ssp-buffer-size=4
-    -fstack-clash-protection
   )
+
+  if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+    target_compile_options(common INTERFACE
+      -fstack-clash-protection
+    )
+  endif()
 
   target_link_libraries(common INTERFACE
     c-testing-and-mocking
