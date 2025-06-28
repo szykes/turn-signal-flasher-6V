@@ -8,6 +8,7 @@ cmake-test
 compile_commands.json
 
 kicad/#auto_saved_files#
+kicad/_autosave*
 kicad/fp-info-cache
 kicad/*-backups/
 kicad/**.lck
