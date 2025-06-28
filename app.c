@@ -8,7 +8,6 @@ static volatile bool is_run = false;
 
 static bool is_flashing = false;
 
-
 static void evaluate_low_voltage(void) {
   if (gpio_flashing_get_state()) {
     // shortcut
