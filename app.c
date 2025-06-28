@@ -4,6 +4,8 @@
 
 #include <stdbool.h>
 
+#define VOLTAGE_LEVEL (50u)
+
 static volatile bool is_run = false;
 
 static bool is_flashing = false;
@@ -32,7 +34,7 @@ static void evaluate_high_voltage(void) {
 static void check_voltage(void) {
   uint8_t voltage = adc_start_and_get();
 
-  if (voltage < 10) {
+  if (voltage < VOLTAGE_LEVEL) {
     evaluate_low_voltage();
   } else {
     evaluate_high_voltage();
@@ -43,8 +45,8 @@ static void evaluate_flashing_state(void) {
   static bool prev_is_flashing = false;
 
   if (!prev_is_flashing && is_flashing) {
-    timer_start();
     gpio_flashing_turn_on();
+    timer_start();
   } if (prev_is_flashing && !is_flashing) {
     gpio_flashing_turn_off();
     timer_stop();
