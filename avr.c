@@ -14,10 +14,10 @@ void hw_init(void) {
   DDRB = (1 << DDB1);
   gpio_flashing_turn_off();
 
-  OCR1C = 20;  // Compare value for ~2.9 Hz
+  OCR1C = 65;
   TIMSK = (1 << OCIE1A);
 
-  ADMUX = (1 << ADLAR) | 0110;
+  ADMUX = (1 << ADLAR) | (1 << MUX1) | (1 << MUX2);
   DIDR0 = (1 << ADC2D ) | (1 << ADC3D);
 
   wdt_enable(WDTO_250MS);
@@ -58,8 +58,9 @@ ISR(TIMER1_COMPA_vect, ISR_BLOCK) {
 
 uint8_t adc_start_and_get(void) {
   // ADC = ((Vpos - Vneg) * 1024) / Vcc
-  ADCSRA = (1 << ADEN)| (1 << ADSC);
+  ADCSRA = (1 << ADEN) | (1 << ADSC);
   while ((ADCSRA & (1 << ADIF)) == 0) {}
+  ADCSRA |= (1 << ADIF);
   return ADCH;
 }
 

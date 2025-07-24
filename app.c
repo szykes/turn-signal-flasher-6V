@@ -9,15 +9,19 @@
 static volatile bool is_run = false;
 
 static bool is_flashing = false;
+static bool is_shortcut = false;
 
 static void evaluate_low_voltage(void) {
   if (gpio_flashing_get_state()) {
     // shortcut
     gpio_flashing_turn_off();
     is_flashing = false;
+    is_shortcut = true;
   } else {
     // started flashing OR turned off bulbs OR shortcut
-    is_flashing = true;
+    if (!is_shortcut) {
+      is_flashing = true;
+    }
   }
 }
 
@@ -28,6 +32,7 @@ static void evaluate_high_voltage(void) {
   } else {
     // not switched turn signaling
     is_flashing = false;
+    is_shortcut = false;
   }
 }
 
@@ -61,7 +66,6 @@ void app_timer_interrupt(void) {
 
 void app_main(void) {
   bool is_running = false;
-
   mcu_cli();
   if (is_run) {
     is_run = false;

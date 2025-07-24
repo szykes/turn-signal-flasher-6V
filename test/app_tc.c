@@ -48,6 +48,8 @@ static void do_nothing_when_flashing_on(const char *str) {
     high_voltage_flashing_on(str);
 
     app_main();
+
+    TEST_CHECK_MOCK();
   }
 }
 
@@ -59,6 +61,8 @@ static void do_nothing_when_flashing_off(const char *str) {
     low_voltage_flashing_off(str);
 
     app_main();
+
+    TEST_CHECK_MOCK();
   }
 }
 
@@ -70,6 +74,8 @@ static void be_idle(const char *str) {
     high_voltage_flashing_off(str);
 
     app_main();
+
+    TEST_CHECK_MOCK();
   }
 }
 
@@ -84,12 +90,30 @@ static bool tc_free_running(void) {
 static bool tc_shortcut(void) {
   TEST_BEGIN();
 
-  MOCK_EXPECT("mcu_cli", "");
-  MOCK_EXPECT("mcu_sei", "");
+  MOCK_EXPECT("mcu_cli", "turning on");
+  MOCK_EXPECT("mcu_sei", "turning on");
 
-  low_voltage_flashing_on("");
+  low_voltage_flashing_on("turning on");
 
-  MOCK_EXPECT("gpio_flashing_turn_off", "");
+  MOCK_EXPECT("gpio_flashing_turn_off", "turning off due to shortcut");
+
+  app_main();
+
+  for (size_t i = 0; i < 10; i++) {
+    MOCK_EXPECT("mcu_cli", "remain turned off");
+    MOCK_EXPECT("mcu_sei", "remain turned off");
+
+    low_voltage_flashing_off("remain turned off");
+
+    app_main();
+
+    TEST_CHECK_MOCK();
+  }
+
+  MOCK_EXPECT("mcu_cli", "shortcut gone");
+  MOCK_EXPECT("mcu_sei", "shortcut gone");
+
+  high_voltage_flashing_off("shortcut gone");
 
   app_main();
 
@@ -151,6 +175,8 @@ static bool tc_flashing_start_then_stop(void) {
     msg[0] = '\0';
     snprintf(msg, sizeof(msg), "flashing turned on, i: %lu", i);
     do_nothing_when_flashing_on(msg);
+
+    TEST_CHECK_MOCK();
   }
 
   app_timer_interrupt();
@@ -200,6 +226,8 @@ static bool tc_flashing_start_then_shortcut(void) {
 
   app_main();
 
+  TEST_CHECK_MOCK();
+
   do_nothing_when_flashing_off("flashing turned off");
 
   app_timer_interrupt();
@@ -224,7 +252,25 @@ static bool tc_flashing_start_then_shortcut(void) {
 
   app_main();
 
-  be_idle("stopped flashing");
+  TEST_CHECK_MOCK();
+
+  for (size_t i = 0; i < 10; i++) {
+    MOCK_EXPECT("mcu_cli", "remain turned off");
+    MOCK_EXPECT("mcu_sei", "remain turned off");
+
+    low_voltage_flashing_off("remain turned off");
+
+    app_main();
+
+    TEST_CHECK_MOCK();
+  }
+
+  MOCK_EXPECT("mcu_cli", "shortcut gone");
+  MOCK_EXPECT("mcu_sei", "shortcut gone");
+
+  high_voltage_flashing_off("shortcut gone");
+
+  app_main();
 
   TEST_END();
 }
