@@ -135,7 +135,6 @@ else()
   set_target_properties(app PROPERTIES OUTPUT_NAME app.elf)
 
   add_custom_command(TARGET app POST_BUILD
-    DEPENDS $<TARGET_FILE:app>
     COMMAND avr-size -C $<TARGET_FILE:app> --mcu=${MCU_GCC}
   )
 
