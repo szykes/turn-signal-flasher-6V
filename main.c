@@ -4,7 +4,7 @@
 int main(void)
 {
   hw_init();
-  mcu_sei();
+  mcu_enable_global_interrupt();
 
   while(1) {
     app_main();

@@ -2,12 +2,16 @@
 
 #include "mock.h"
 
-void mcu_cli(void) {
+void mcu_enable_global_interrupt(void) {
   MOCK_RECORD();
 }
 
-void mcu_sei(void) {
+void mcu_disable_global_interrupt(void) {
   MOCK_RECORD();
+}
+
+void delay_us(uint16_t us) {
+  MOCK_RECORD_1_PARAM(uint16_t, us);
 }
 
 bool gpio_flashing_get_state(void) {
@@ -22,7 +26,11 @@ void gpio_flashing_turn_on(void) {
   MOCK_RECORD();
 }
 
-void timer_start(void) {
+void timer_start_long(void) {
+  MOCK_RECORD();
+}
+
+void timer_set_short(void) {
   MOCK_RECORD();
 }
 

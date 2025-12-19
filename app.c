@@ -4,9 +4,9 @@
 
 #include <stdbool.h>
 
-#define VOLTAGE_LEVEL (50u)
+#define VOLTAGE_DIFF (15u) // ~170 mV
 
-static volatile bool is_run = false;
+static volatile bool is_interrupted = false;
 
 static bool is_flashing = false;
 static bool is_shortcut = false;
@@ -39,7 +39,7 @@ static void evaluate_high_voltage(void) {
 static void check_voltage(void) {
   uint8_t voltage = adc_start_and_get();
 
-  if (voltage < VOLTAGE_LEVEL) {
+  if (voltage < VOLTAGE_DIFF) {
     evaluate_low_voltage();
   } else {
     evaluate_high_voltage();
@@ -51,7 +51,7 @@ static void evaluate_flashing_state(void) {
 
   if (!prev_is_flashing && is_flashing) {
     gpio_flashing_turn_on();
-    timer_start();
+    timer_start_long();
   } if (prev_is_flashing && !is_flashing) {
     gpio_flashing_turn_off();
     timer_stop();
@@ -61,25 +61,29 @@ static void evaluate_flashing_state(void) {
 }
 
 void app_timer_interrupt(void) {
-  is_run = true;
+  is_interrupted = true;
 }
 
 void app_main(void) {
-  bool is_running = false;
-  mcu_cli();
-  if (is_run) {
-    is_run = false;
-    is_running = true;
+  bool has_interrupted = false;
+  mcu_disable_global_interrupt();
+  if (is_interrupted) {
+    is_interrupted = false;
+    has_interrupted = true;
   }
-  mcu_sei();
+  mcu_enable_global_interrupt();
 
-  if (is_running) {
+  if (has_interrupted) {
+    timer_set_short();
     if (gpio_flashing_get_state()) {
       gpio_flashing_turn_off();
     } else {
       gpio_flashing_turn_on();
     }
   }
+
+  // Wait for closing MOSFET
+  delay_us(70);
 
   check_voltage();
   evaluate_flashing_state();

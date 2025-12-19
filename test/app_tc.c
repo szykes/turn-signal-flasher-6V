@@ -5,8 +5,10 @@
 #include <limits.h>
 #include <stdio.h>
 
-#define VOLTAGE_LOW (30u)
+#define VOLTAGE_LOW (5u)
 #define VOLTAGE_HIGH (230u)
+
+const static uint16_t us = 70;
 
 static void high_voltage_flashing_off(const char *str) {
   uint8_t voltage = VOLTAGE_HIGH;
@@ -42,8 +44,9 @@ static void low_voltage_flashing_on(const char *str) {
 
 static void do_nothing_when_flashing_on(const char *str) {
   for (size_t i = 0; i < 10; i++) {
-    MOCK_EXPECT("mcu_cli", str);
-    MOCK_EXPECT("mcu_sei", str);
+    MOCK_EXPECT("mcu_disable_global_interrupt", str);
+    MOCK_EXPECT("mcu_enable_global_interrupt", str);
+    MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, str);
 
     high_voltage_flashing_on(str);
 
@@ -55,8 +58,9 @@ static void do_nothing_when_flashing_on(const char *str) {
 
 static void do_nothing_when_flashing_off(const char *str) {
   for (size_t i = 0; i < 10; i++) {
-    MOCK_EXPECT("mcu_cli", str);
-    MOCK_EXPECT("mcu_sei", str);
+    MOCK_EXPECT("mcu_disable_global_interrupt", str);
+    MOCK_EXPECT("mcu_enable_global_interrupt", str);
+    MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, str);
 
     low_voltage_flashing_off(str);
 
@@ -68,8 +72,9 @@ static void do_nothing_when_flashing_off(const char *str) {
 
 static void be_idle(const char *str) {
   for (size_t i = 0; i < 100; i++) {
-    MOCK_EXPECT("mcu_cli", str);
-    MOCK_EXPECT("mcu_sei", str);
+    MOCK_EXPECT("mcu_disable_global_interrupt", str);
+    MOCK_EXPECT("mcu_enable_global_interrupt", str);
+    MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, str);
 
     high_voltage_flashing_off(str);
 
@@ -90,8 +95,9 @@ static bool tc_free_running(void) {
 static bool tc_shortcut(void) {
   TEST_BEGIN();
 
-  MOCK_EXPECT("mcu_cli", "turning on");
-  MOCK_EXPECT("mcu_sei", "turning on");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "turning on");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "turning on");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "turning on");
 
   low_voltage_flashing_on("turning on");
 
@@ -100,8 +106,9 @@ static bool tc_shortcut(void) {
   app_main();
 
   for (size_t i = 0; i < 10; i++) {
-    MOCK_EXPECT("mcu_cli", "remain turned off");
-    MOCK_EXPECT("mcu_sei", "remain turned off");
+    MOCK_EXPECT("mcu_disable_global_interrupt", "remain turned off");
+    MOCK_EXPECT("mcu_enable_global_interrupt", "remain turned off");
+    MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "remain turned off");
 
     low_voltage_flashing_off("remain turned off");
 
@@ -110,8 +117,9 @@ static bool tc_shortcut(void) {
     TEST_CHECK_MOCK();
   }
 
-  MOCK_EXPECT("mcu_cli", "shortcut gone");
-  MOCK_EXPECT("mcu_sei", "shortcut gone");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "shortcut gone");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "shortcut gone");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "shortcut gone");
 
   high_voltage_flashing_off("shortcut gone");
 
@@ -126,12 +134,13 @@ static bool tc_flashing_start_then_stop(void) {
   char msg[50];
   bool flashing_state;
 
-  MOCK_EXPECT("mcu_cli", "starting flashing");
-  MOCK_EXPECT("mcu_sei", "starting flashing");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "starting flashing");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "starting flashing");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "starting flashing");
 
   low_voltage_flashing_off("starting flashing");
   MOCK_EXPECT("gpio_flashing_turn_on", "starting flashing");
-  MOCK_EXPECT("timer_start", "starting flashing");
+  MOCK_EXPECT("timer_start_long", "starting flashing");
 
   app_main();
 
@@ -143,12 +152,16 @@ static bool tc_flashing_start_then_stop(void) {
 
     app_timer_interrupt();
 
-    MOCK_EXPECT("mcu_cli", msg);
-    MOCK_EXPECT("mcu_sei", msg);
+    MOCK_EXPECT("mcu_disable_global_interrupt", msg);
+    MOCK_EXPECT("mcu_enable_global_interrupt", msg);
 
+    MOCK_EXPECT("timer_set_short", msg);
     flashing_state = true;
     MOCK_EXPECT_RET("gpio_flashing_get_state", bool, flashing_state, msg);
     MOCK_EXPECT("gpio_flashing_turn_off", msg);
+
+    MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, msg);
+
     low_voltage_flashing_off(msg);
 
     app_main();
@@ -162,12 +175,16 @@ static bool tc_flashing_start_then_stop(void) {
     snprintf(msg, sizeof(msg), "flashing turning on, i: %lu", i);
     app_timer_interrupt();
 
-    MOCK_EXPECT("mcu_cli", msg);
-    MOCK_EXPECT("mcu_sei", msg);
+    MOCK_EXPECT("mcu_disable_global_interrupt", msg);
+    MOCK_EXPECT("mcu_enable_global_interrupt", msg);
 
+    MOCK_EXPECT("timer_set_short", msg);
     flashing_state = false;
     MOCK_EXPECT_RET("gpio_flashing_get_state", bool, flashing_state, msg);
     MOCK_EXPECT("gpio_flashing_turn_on", msg);
+
+    MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, msg);
+
     high_voltage_flashing_on(msg);
 
     app_main();
@@ -181,13 +198,17 @@ static bool tc_flashing_start_then_stop(void) {
 
   app_timer_interrupt();
 
-  MOCK_EXPECT("mcu_cli", "last flashing turning off");
-  MOCK_EXPECT("mcu_sei", "last flashing turning off");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "last flashing turning off");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "last flashing turning off");
 
+  MOCK_EXPECT("timer_set_short", msg);
   flashing_state = true;
   MOCK_EXPECT_RET("gpio_flashing_get_state", bool, flashing_state, "last flashing turning off");
   MOCK_EXPECT("gpio_flashing_turn_off", "last flashing turning off");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "last flashing turning off");
+
   high_voltage_flashing_off("last flashing turning off");
+
   MOCK_EXPECT("gpio_flashing_turn_off", "stopping flashing");
   MOCK_EXPECT("timer_stop", "stopping flashing");
 
@@ -203,12 +224,13 @@ static bool tc_flashing_start_then_shortcut(void) {
 
   bool flashing_state;
 
-  MOCK_EXPECT("mcu_cli", "starting flashing");
-  MOCK_EXPECT("mcu_sei", "starting flashing");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "starting flashing");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "starting flashing");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "starting flashing");
 
   low_voltage_flashing_off("starting flashing");
   MOCK_EXPECT("gpio_flashing_turn_on", "starting flashing");
-  MOCK_EXPECT("timer_start", "starting flashing");
+  MOCK_EXPECT("timer_start_long", "starting flashing");
 
   app_main();
 
@@ -216,12 +238,15 @@ static bool tc_flashing_start_then_shortcut(void) {
 
   app_timer_interrupt();
 
-  MOCK_EXPECT("mcu_cli", "flashing turning off");
-  MOCK_EXPECT("mcu_sei", "flashing turning off");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "flashing turning off");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "flashing turning off");
 
+  MOCK_EXPECT("timer_set_short", "flashing turning off");
   flashing_state = true;
   MOCK_EXPECT_RET("gpio_flashing_get_state", bool, flashing_state, "flashing turning off");
   MOCK_EXPECT("gpio_flashing_turn_off", "flashing turning off");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "flashing turning off");
+
   low_voltage_flashing_off("flashing turning off");
 
   app_main();
@@ -232,18 +257,22 @@ static bool tc_flashing_start_then_shortcut(void) {
 
   app_timer_interrupt();
 
-  MOCK_EXPECT("mcu_cli", "flashing turning on");
-  MOCK_EXPECT("mcu_sei", "flashing turning on");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "flashing turning on");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "flashing turning on");
 
+  MOCK_EXPECT("timer_set_short", "flashing turning on");
   flashing_state = false;
   MOCK_EXPECT_RET("gpio_flashing_get_state", bool, flashing_state, "flashing turning on");
   MOCK_EXPECT("gpio_flashing_turn_on", "flashing turning on");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "flashing turning on");
+
   high_voltage_flashing_on("flashing turning on");
 
   app_main();
 
-  MOCK_EXPECT("mcu_cli", "shortcut");
-  MOCK_EXPECT("mcu_sei", "shortcut");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "shortcut");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "shortcut");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "shortcut");
 
   low_voltage_flashing_on("shortcut");
   MOCK_EXPECT("gpio_flashing_turn_off", "shortcut");
@@ -255,8 +284,9 @@ static bool tc_flashing_start_then_shortcut(void) {
   TEST_CHECK_MOCK();
 
   for (size_t i = 0; i < 10; i++) {
-    MOCK_EXPECT("mcu_cli", "remain turned off");
-    MOCK_EXPECT("mcu_sei", "remain turned off");
+    MOCK_EXPECT("mcu_disable_global_interrupt", "remain turned off");
+    MOCK_EXPECT("mcu_enable_global_interrupt", "remain turned off");
+    MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "remain turned off");
 
     low_voltage_flashing_off("remain turned off");
 
@@ -265,8 +295,9 @@ static bool tc_flashing_start_then_shortcut(void) {
     TEST_CHECK_MOCK();
   }
 
-  MOCK_EXPECT("mcu_cli", "shortcut gone");
-  MOCK_EXPECT("mcu_sei", "shortcut gone");
+  MOCK_EXPECT("mcu_disable_global_interrupt", "shortcut gone");
+  MOCK_EXPECT("mcu_enable_global_interrupt", "shortcut gone");
+  MOCK_EXPECT_1_PARAM("delay_us", uint16_t, us, "shortcut gone");
 
   high_voltage_flashing_off("shortcut gone");
 
