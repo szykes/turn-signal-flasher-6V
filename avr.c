@@ -49,12 +49,12 @@ void gpio_flashing_turn_on(void) {
 }
 
 void timer_start_long(void) {
-  OCR1C = 80;
+  OCR1C = 80; // ~0.65 s
   TCCR1 = (1 << CTC1) | (1 << CS13) | (1 << CS12) | (1 << CS11); // Prescaler is 8192
 }
 
 void timer_set_short(void) {
-  OCR1C = 55;
+  OCR1C = 55; // ~0.45 s
 }
 
 void timer_stop(void) {
